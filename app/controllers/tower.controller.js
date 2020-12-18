@@ -90,10 +90,6 @@ exports.findAll = (req, res) => {
       const location = req.query.location;
       condition.location = { [Op.like]: `%${location}%` }
     }
-    if(req.query.location){
-      const location = req.query.location;
-      condition.location = { [Op.like]: `%${location}%` }
-    }
     if(req.query.number_of_offices){
       const number_of_offices = req.query.number_of_offices;
       condition.number_of_offices = number_of_offices
