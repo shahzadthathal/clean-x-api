@@ -4,7 +4,10 @@ const Office = db.offices;
 const Op = db.Sequelize.Op;
 
 const ERROR_MESSAGE = 'Something went wrong.'
+const config = require("../../config/auth.config");
 
+const socketConfig = require("../../config/socket.config");
+const io = require('../lib/socket')
 
 exports.create = (req, res) => {
   
@@ -26,7 +29,13 @@ exports.create = (req, res) => {
 
 	Tower.create(tower)
 	.then(data => {
-	  return res.send(data);
+    
+    let payload = {
+      'message':socketConfig.EVENT_TOWER_CREATED_MESSAGE
+    }
+		io.emitToAll(socketConfig.EVENT_TOWER_CREATED,payload)
+	  	
+	  	return res.send(data);
 	})
 	.catch(err => {
 	  return res.status(500).send({
@@ -37,7 +46,7 @@ exports.create = (req, res) => {
 };
 
 exports.findAll = (req, res) => {
-  
+
   	//Filters
     const name = req.query.name;
     let condition = name ? { name: { [Op.like]: `%${name}%` }, location: { [Op.like]: `%${name}%` } } : null;
@@ -95,6 +104,12 @@ exports.update = (req, res) => {
   	})
     .then(num => {
       if (num == 1) {
+        
+        let payload = {
+          'message':socketConfig.EVENT_TOWER_UPDATED_MESSAGE
+        }
+      	io.emitToAll(socketConfig.EVENT_TOWER_UPDATED,payload)
+
         return res.send({
           message: "Tower was updated successfully."
         });
@@ -109,27 +124,6 @@ exports.update = (req, res) => {
         message: err.message || ERROR_MESSAGE
       });
     });
-    const towerId = req.params.id;
-
-    Tower.update(req.body, {
-    	where: { id: towerId }
-  	})
-    .then(num => {
-      if (num == 1) {
-        res.send({
-          message: "Tower was updated successfully."
-        });
-      } else {
-        res.send({
-          message: ERROR_MESSAGE
-        });
-      }
-    })
-    .catch(err => {
-      res.status(500).send({
-        message: err.message || ERROR_MESSAGE
-      });
-    });
 
 };
 
@@ -140,6 +134,9 @@ exports.delete = (req, res) => {
   	})
     .then(num => {
       if (num == 1) {
+      	
+      	io.emitToAll(socketConfig.EVENT_TOWER_DELETED,{message:'Tower deleted', 'id':id})
+
         return res.send({
           message: "Tower was deleted successfully!"
         });
