@@ -102,6 +102,27 @@ exports.update = (req, res) => {
         message: err.message || ERROR_MESSAGE
       });
     });
+    const towerId = req.params.id;
+
+    Tower.update(req.body, {
+    	where: { id: towerId }
+  	})
+    .then(num => {
+      if (num == 1) {
+        res.send({
+          message: "Tower was updated successfully."
+        });
+      } else {
+        res.send({
+          message: ERROR_MESSAGE
+        });
+      }
+    })
+    .catch(err => {
+      res.status(500).send({
+        message: err.message || ERROR_MESSAGE
+      });
+    });
 
 };
 

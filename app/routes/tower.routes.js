@@ -21,7 +21,7 @@ module.exports = app => {
 
   router.get("/:id", towerController.findOne);
 
-  router.put("/:id", [auth.verifyToken], towerController.update);
+  router.patch("/:id", [auth.verifyToken], towerController.update);
 
   router.delete("/:id", [auth.verifyToken], towerController.delete);
 
