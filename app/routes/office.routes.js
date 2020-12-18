@@ -15,15 +15,15 @@ module.exports = app => {
 
   var router = require("express").Router();
 
-  router.post("/", [auth.verifyToken], officeController.create);
+  router.post("/", [auth.verifyToken], officeController.validate('createOfficeValidation'), officeController.create);
 
   router.get("/",  officeController.findAll);
 
-  router.get("/:id", officeController.findOne);
+  router.get("/:id", officeController.validate('checkParamsIdValidation'), officeController.findOne);
 
-  router.patch("/:id", [auth.verifyToken], officeController.update);
+  router.patch("/:id", [auth.verifyToken], officeController.validate('checkParamsIdValidation'), officeController.update);
 
-  router.delete("/:id", [auth.verifyToken], officeController.delete);
+  router.delete("/:id", [auth.verifyToken], officeController.validate('checkParamsIdValidation'), officeController.delete);
 
   app.use('/api/offices', router);
 };

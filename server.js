@@ -5,6 +5,7 @@ const cors = require("cors");
 const numCPUs = require('os').cpus().length;
 const cluster       = require('cluster');
 const winston       = require('winston');
+const expressValidator = require('express-validator')
 
 if (cluster.isMaster) { // Parent, only creates clusters
     global.processId = 'Master';
@@ -39,6 +40,8 @@ if (cluster.isMaster) { // Parent, only creates clusters
 	// parse requests of content-type - application/x-www-form-urlencoded
 	app.use(bodyParser.urlencoded({ extended: true }));
 
+	app.use(expressValidator())
+
 	const db = require("./models");
 	db.sequelize.sync();
 
@@ -60,5 +63,5 @@ if (cluster.isMaster) { // Parent, only creates clusters
 	server.listen(PORT, () => {
 	  console.log(`Server is running on port ${PORT}.`);
 	});
-	
+
 }

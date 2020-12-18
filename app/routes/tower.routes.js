@@ -15,15 +15,15 @@ module.exports = app => {
 
   var router = require("express").Router();
 
-  router.post("/", [auth.verifyToken], towerController.create);
+  router.post("/", [auth.verifyToken],  towerController.validate('createTowerValidation'), towerController.create);
 
   router.get("/",  towerController.findAll);
 
-  router.get("/:id", towerController.findOne);
+  router.get("/:id", towerController.validate('checkParamsIdValidation'), towerController.findOne);
 
-  router.patch("/:id", [auth.verifyToken], towerController.update);
+  router.patch("/:id", [auth.verifyToken], towerController.validate('checkParamsIdValidation'), towerController.update);
 
-  router.delete("/:id", [auth.verifyToken], towerController.delete);
+  router.delete("/:id", [auth.verifyToken], towerController.validate('checkParamsIdValidation'), towerController.delete);
 
   app.use('/api/towers', router);
 };
