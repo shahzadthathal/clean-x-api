@@ -10,11 +10,11 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // define association here
-      Tower.hasMany(models.Office, {
-      foreignKey: 'towerId',
-      })
-
+      //define association here
+      /*Tower.hasMany(models.Office, {
+          foreignKey: 'towerId',
+      })*/
+      Tower.hasMany(models.Office, {as: 'offices'})
     }
   };
   Tower.init({
@@ -29,5 +29,10 @@ module.exports = (sequelize, DataTypes) => {
     sequelize,
     modelName: 'Tower',
   });
+
+  // Tower.associate = models => {
+  //   Tower.hasMany(models.offices)
+  // }
+
   return Tower;
 };

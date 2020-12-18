@@ -11,11 +11,7 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Office.belongsTo(models.Tower, {
-      foreignKey: 'towerId',
-      onDelete: 'CASCADE'
-      })
-
+      Office.belongsTo(models.Tower, {foreignKey: 'towerId', as: 'tower'})
     }
   };
   Office.init({
@@ -35,5 +31,7 @@ module.exports = (sequelize, DataTypes) => {
     sequelize,
     modelName: 'Office',
   });
+
+
   return Office;
 };
