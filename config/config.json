@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "homestead",
+    "password": "!Secret1234",
+    "database": "db_xclean",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "test": {
+    "username": "homestead",
+    "password": "!Secret1234",
+    "database": "db_xclean_test",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "root",
+    "password": null,
+    "database": "db_xclean_production",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  }
+}
