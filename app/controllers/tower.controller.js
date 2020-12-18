@@ -4,7 +4,6 @@ const Office = db.offices;
 const Op = db.Sequelize.Op;
 
 const ERROR_MESSAGE = 'Something went wrong.'
-const config = require("../../config/auth.config");
 
 const socketConfig = require("../../config/socket.config");
 const io = require('../lib/socket')
@@ -44,14 +43,12 @@ exports.validate = (method) => {
 }
 
 exports.create = (req, res) => {
-  
   try{
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         res.status(422).json({ errors: errors.array() });
         return;
       }
-
       const tower = {
         name: req.body.name,
         location: req.body.location,
@@ -61,14 +58,12 @@ exports.create = (req, res) => {
         latitude:  req.body.latitude,
         longitude: req.body.longitude,
       };
-
       Tower.create(tower)
       .then(data => {
         let payload = {
           'message':socketConfig.EVENT_TOWER_CREATED_MESSAGE
         }
         io.emitToAll(socketConfig.EVENT_TOWER_CREATED,payload)
-          
         return res.send(data);
       })
       .catch(err => {
@@ -76,7 +71,6 @@ exports.create = (req, res) => {
           message: err.message || ERROR_MESSAGE
         });
       });
-
   }catch(err){
     return res.status(500).send({ message: err.message || ERROR_MESSAGE });
   }
@@ -128,13 +122,14 @@ exports.findAll = (req, res) => {
 
 
     //show-with-offices
+    let includesAssociation = null
+    if(req.query.show_with_offices && (req.query.show_with_offices==true || req.query.show_with_offices=='true') ){
+      includesAssociation = ['offices']
+    }
 
-
-    Tower.findAndCountAll({ where: condition, attributes:getAttributes, order:sortingOrder, limit, offset, 
-    	//include:['offices']
-    })
+    Tower.findAndCountAll({ where: condition, attributes:getAttributes, order:sortingOrder, limit, offset, include:includesAssociation})
     .then(data => {
-    	const paginateData = getPagingData(data, page, limit);
+    	  const paginateData = getPagingData(data, page, limit);
       	return res.send(paginateData);
     })
     .catch(err => {
@@ -178,19 +173,16 @@ exports.update = (req, res) => {
       res.status(422).json({ errors: errors.array() });
       return;
     }
-
   	const id = req.params.id;
   	Tower.update(req.body, {
     where: { id: id }
   	})
     .then(num => {
       if (num == 1) {
-        
         let payload = {
           'message':socketConfig.EVENT_TOWER_UPDATED_MESSAGE
         }
       	io.emitToAll(socketConfig.EVENT_TOWER_UPDATED,payload)
-
         return res.send({
           message: "Tower was updated successfully."
         });
@@ -205,11 +197,9 @@ exports.update = (req, res) => {
         message: err.message || ERROR_MESSAGE
       });
     });
-
   }catch(err){
     return res.status(500).send({ message: err.message || ERROR_MESSAGE });
   }
-
 }
 
 exports.delete = (req, res) => {
@@ -219,16 +209,13 @@ exports.delete = (req, res) => {
       res.status(422).json({ errors: errors.array() });
       return;
     }
-
   	const id = req.params.id;
   	Tower.destroy({
     where: { id: id }
   	})
     .then(num => {
       if (num == 1) {
-      	
       	io.emitToAll(socketConfig.EVENT_TOWER_DELETED,{message:'Tower deleted', 'id':id})
-
         return res.send({
           message: "Tower was deleted successfully!"
         });
@@ -251,7 +238,6 @@ exports.delete = (req, res) => {
 const getPagination = (page, size) => {
   const limit = size ? +size : 3;
   const offset = page ? page * limit : 0;
-
   return { limit, offset };
 }
 
@@ -259,6 +245,5 @@ const getPagingData = (data, page, limit) => {
   const { count: totalItems, rows: towers } = data;
   const currentPage = page ? +page : 0;
   const totalPages = Math.ceil(totalItems / limit);
-
   return { totalItems, towers, totalPages, currentPage };
 }

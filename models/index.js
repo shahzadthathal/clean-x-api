@@ -31,6 +31,17 @@ Object.keys(db).forEach(modelName => {
   }
 });
 
+//Fix the wrong count issue in findAndCountAll()
+sequelize.addHook('beforeCount', function (options) {
+  if (this._scope.include && this._scope.include.length > 0) {
+    options.distinct = true
+    options.col = this._scope.col || options.col || `"${this.options.name.singular}".id`
+  }
+  if (options.include && options.include.length > 0) {
+    options.include = null
+  }
+})
+
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
@@ -38,11 +49,9 @@ db.users = require("./user.js")(sequelize, Sequelize);
 db.towers = require("./tower.js")(sequelize, Sequelize);
 db.offices = require("./office.js")(sequelize, Sequelize);
 
-/*db.towers.hasMany(db.offices, { as: "offices" });
-db.offices.belongsTo(db.towers, {
-  foreignKey: "towerId",
-  as: "tower",
-});*/
+//Define Models Relations
+db.towers.hasMany(db.offices, {foreignKey: 'towerId', as: "offices" });
+db.offices.belongsTo(db.towers, {as: "tower"});
 
 
 module.exports = db;

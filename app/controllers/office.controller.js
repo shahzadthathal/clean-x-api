@@ -88,10 +88,15 @@ exports.findAll = (req, res) => {
     const sortOrder = req.query.sortOrder || 'ASC';
     const sortingOrder = [[sortBy, sortOrder]];
     
+    let includesAssociation = null
+    if(req.query.show_with_tower && (req.query.show_with_tower==true || req.query.show_with_tower=='true') ){
+      includesAssociation = ['tower']
+    }
+
     //Get specific fields, Pass comma separated fields
     const getAttributes = req.query.attributes ? req.query.attributes.split(',') : ['id', 'office_number', 'rent', 'towerId', 'createdAt'];
 
-    Office.findAndCountAll({ where: condition, attributes:getAttributes, order:sortingOrder, limit, offset,})
+    Office.findAndCountAll({ where: condition, attributes:getAttributes, order:sortingOrder, limit, offset, include:includesAssociation})
     .then(data => {
     	const paginateData = getPagingData(data, page, limit);
       	return res.send(paginateData);

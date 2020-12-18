@@ -11,10 +11,7 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       //define association here
-      /*Tower.hasMany(models.Office, {
-          foreignKey: 'towerId',
-      })*/
-      Tower.hasMany(models.Office, {as: 'offices'})
+      //Tower.hasMany(models.Office,{foreignKey: 'towerId', as: 'offices'})
     }
   };
   Tower.init({
@@ -29,10 +26,5 @@ module.exports = (sequelize, DataTypes) => {
     sequelize,
     modelName: 'Tower',
   });
-
-  // Tower.associate = models => {
-  //   Tower.hasMany(models.offices)
-  // }
-
   return Tower;
 };
