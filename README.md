@@ -8,11 +8,12 @@
 
 - Database config
     - Update database credentials in  /config/config.json
-    - Run migration: npx sequelize-cli db:migrate
-    - Run seeder: npx sequelize-cli db:seed:all
 
 - Install dependencies
+  - cd clean-x-api
   - npm install
+  - Run migration: npx sequelize-cli db:migrate
+  - Run seeder: npx sequelize-cli db:seed:all
 
 - Run
   - node server
