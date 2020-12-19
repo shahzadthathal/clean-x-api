@@ -1,5 +1,16 @@
 'use strict';
 
+const Redis = require('ioredis')
+const redis = new Redis()
+const RedisAdaptor = require('sequelize-transparent-cache-ioredis')
+const redisAdaptor = new RedisAdaptor({
+  client: redis,
+  namespace: 'model',
+  lifetime: 60 * 60  //1 hour
+})
+const sequelizeCache = require('sequelize-transparent-cache')
+const { withCache } = sequelizeCache(redisAdaptor)
+
 const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
@@ -46,8 +57,8 @@ db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
 db.users = require("./user.js")(sequelize, Sequelize);
-db.towers = require("./tower.js")(sequelize, Sequelize);
-db.offices = require("./office.js")(sequelize, Sequelize);
+db.towers = withCache(require("./tower.js")(sequelize, Sequelize))
+db.offices = withCache(require("./office.js")(sequelize, Sequelize));
 
 //Define Models Relations
 db.towers.hasMany(db.offices, {foreignKey: 'towerId', as: "offices" });

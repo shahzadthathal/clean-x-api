@@ -16,10 +16,13 @@
     "express": "^4.17.1",
     "express-validator": "^5.3.1",
     "forever-monitor": "^3.0.3",
+    "ioredis": "^4.19.4",
     "jsonwebtoken": "^8.5.1",
     "mysql2": "^2.2.5",
     "sequelize": "^6.3.5",
     "sequelize-cli": "^6.2.0",
+    "sequelize-transparent-cache": "^2.3.0",
+    "sequelize-transparent-cache-ioredis": "^2.3.0",
     "socket.io": "^3.0.4",
     "winston": "^3.3.3"
   }

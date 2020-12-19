@@ -1,5 +1,7 @@
+
 const db = require("../../models");
 const Tower = db.towers;
+
 const Office = db.offices;
 const Op = db.Sequelize.Op;
 
@@ -46,8 +48,7 @@ exports.create = (req, res) => {
   try{
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        res.status(422).json({ errors: errors.array() });
-        return;
+        return res.status(422).json({ errors: errors.array() });
       }
       const tower = {
         name: req.body.name,
@@ -58,8 +59,9 @@ exports.create = (req, res) => {
         latitude:  req.body.latitude,
         longitude: req.body.longitude,
       };
-      Tower.create(tower)
+      Tower.cache().create(tower)
       .then(data => {
+        //Emit Event
         let payload = {
           'message':socketConfig.EVENT_TOWER_CREATED_MESSAGE
         }
@@ -67,9 +69,7 @@ exports.create = (req, res) => {
         return res.send(data);
       })
       .catch(err => {
-        return res.status(500).send({
-          message: err.message || ERROR_MESSAGE
-        });
+        return res.status(500).send({message: err.message || ERROR_MESSAGE});
       });
   }catch(err){
     return res.status(500).send({ message: err.message || ERROR_MESSAGE });
@@ -78,9 +78,8 @@ exports.create = (req, res) => {
 
 exports.findAll = (req, res) => {
   try{
-  	//Filters
-    const name = req.query.name;
 
+  	//Filters
     let condition = {};
     if(req.query.name){
       const name = req.query.name;
@@ -116,24 +115,32 @@ exports.findAll = (req, res) => {
     //Get specific fields, Pass comma separated fields
     const getAttributes = req.query.attributes ? req.query.attributes.split(',') : ['id', 'name', 'location', 'number_of_floors', 'number_of_offices','rating','latitude','longitude','createdAt'];
 
-
     //show-with-offices
     let includesAssociation = null
     if(req.query.show_with_offices && (req.query.show_with_offices==true || req.query.show_with_offices=='true') ){
       includesAssociation = ['offices']
     }
 
-    Tower.findAndCountAll({ where: condition, attributes:getAttributes, order:sortingOrder, limit, offset, include:includesAssociation})
-    .then(data => {
-    	  const paginateData = getPagingData(data, page, limit);
-      	return res.send(paginateData);
+    Tower.count({
+      where: condition,
+    })
+    .then(function(count) {
+        Tower.cache('all-towers-'+page+'-'+size).findAll({ where: condition, attributes:getAttributes, order:sortingOrder, limit, offset, include:includesAssociation})
+        .then(data => {
+            let dataObj = {
+              count: count,
+              rows:data
+            }
+            const paginateData = getPagingData(dataObj, page, limit);
+            return res.send(paginateData);
+        })
+        .catch(err => {
+          return res.status(500).send({message: err.message || ERROR_MESSAGE});
+        });
     })
     .catch(err => {
-      return res.status(500).send({
-      	message: err.message || ERROR_MESSAGE
-      });
+      return res.status(500).send({message: err.message || ERROR_MESSAGE});
     });
-  
   }catch(err){
     return res.status(500).send({ message: err.message || ERROR_MESSAGE });
   }
@@ -144,18 +151,15 @@ exports.findOne = (req, res) => {
   try{
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(422).json({ errors: errors.array() });
-      return;
+      return res.status(422).json({ errors: errors.array() });
     }
     const id = req.params.id;
-    Tower.findByPk(id)
+    Tower.cache().findByPk(id)
     .then(data => {
       return res.send(data);
     })
     .catch(err => {
-      return res.status(500).send({
-        message: err.message || ERROR_MESSAGE
-      });
+      return res.status(500).send({message: err.message || ERROR_MESSAGE});
     });
   }catch(err){
     return res.status(500).send({ message: err.message || ERROR_MESSAGE });
@@ -166,32 +170,24 @@ exports.update = (req, res) => {
   try{
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(422).json({ errors: errors.array() });
-      return;
+      return res.status(422).json({ errors: errors.array() });
     }
-  	const id = req.params.id;
-  	Tower.update(req.body, {
-    where: { id: id }
-  	})
-    .then(num => {
-      if (num == 1) {
+    const id = req.params.id;
+    Tower.cache().findByPk(id)
+    .then(tower => {
+      tower.cache().update(req.body)
+      .then(tower => {
+        //Emit Event
         let payload = {
           'message':socketConfig.EVENT_TOWER_UPDATED_MESSAGE
         }
-      	io.emitToAll(socketConfig.EVENT_TOWER_UPDATED,payload)
-        return res.send({
-          message: "Tower was updated successfully."
-        });
-      } else {
-        return res.send({
-          message: ERROR_MESSAGE
-        });
-      }
-    })
-    .catch(err => {
-      return res.status(500).send({
-        message: err.message || ERROR_MESSAGE
+        io.emitToAll(socketConfig.EVENT_TOWER_UPDATED,payload)
+        return res.send(tower);
+      }).catch(err => {
+        return res.status(500).send({message: err.message || ERROR_MESSAGE});
       });
+    }).catch(err => {
+      return res.status(500).send({message: err.message || ERROR_MESSAGE});
     });
   }catch(err){
     return res.status(500).send({ message: err.message || ERROR_MESSAGE });
@@ -202,29 +198,24 @@ exports.delete = (req, res) => {
   try{
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(422).json({ errors: errors.array() });
-      return;
+      return res.status(422).json({ errors: errors.array() });
     }
-  	const id = req.params.id;
-  	Tower.destroy({
-    where: { id: id }
-  	})
-    .then(num => {
-      if (num == 1) {
-      	io.emitToAll(socketConfig.EVENT_TOWER_DELETED,{message:'Tower deleted', 'id':id})
-        return res.send({
-          message: "Tower was deleted successfully!"
-        });
-      } else {
-        return res.send({
-         message: ERROR_MESSAGE
-        });
-      }
-    })
-    .catch(err => {
-      return res.status(500).send({
-        message: err.message || ERROR_MESSAGE
+    const id = req.params.id;
+    Tower.cache().findByPk(id)
+    .then(tower => {
+      tower.cache().destroy(req.body)
+      .then(num => {
+        //Emit Event
+        let payload = {
+          'message':socketConfig.EVENT_TOWER_UPDATED_MESSAGE
+        }
+        io.emitToAll(socketConfig.EVENT_TOWER_DELETED,{message:'Tower deleted', 'id':id})
+        return res.send({message: "Tower was deleted successfully!"});
+      }).catch(err => {
+        return res.status(500).send({message: err.message || ERROR_MESSAGE});
       });
+    }).catch(err => {
+      return res.status(500).send({message: err.message || ERROR_MESSAGE});
     });
   }catch(err){
     return res.status(500).send({ message: err.message || ERROR_MESSAGE });

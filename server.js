@@ -7,12 +7,14 @@ const cluster       = require('cluster');
 const winston       = require('winston');
 const expressValidator = require('express-validator')
 
-if (cluster.isMaster) { // Parent, only creates clusters
+//cluster module for highly scalable app
+if (cluster.isMaster) { 
+	// Parent, only creates clusters
     global.processId = 'Master';
 
     winston.info(`Launching 1 worker(s)`);
-    //for (let i = 0; i < numCPUs; ++i) {
-    for (let i = 0; i < 2; ++i) {
+    //production use `i < numCPUs` instead of `i < 1`
+    for (let i = 0; i < 1; ++i) {
         cluster.fork();
     }
     cluster.on('fork', worker => winston.info(`Worker ${worker.id} created`));
@@ -24,7 +26,6 @@ if (cluster.isMaster) { // Parent, only creates clusters
         cluster.fork();
     });
 } else {
-
 
 	const app = express();
 
@@ -40,14 +41,15 @@ if (cluster.isMaster) { // Parent, only creates clusters
 	// parse requests of content-type - application/x-www-form-urlencoded
 	app.use(bodyParser.urlencoded({ extended: true }));
 
+	//reqest data validation  +  sainitization
 	app.use(expressValidator())
 
+	//Init db
 	const db = require("./models");
 	db.sequelize.sync();
 
 	// simple route
 	app.get("/", (req, res) => {
-	  	//res.json({ message: "Welcome..." });
 	    res.sendFile(__dirname + '/index.html');
 	});
 
@@ -55,7 +57,10 @@ if (cluster.isMaster) { // Parent, only creates clusters
 	require("./app/routes/tower.routes")(app);
 	require("./app/routes/office.routes")(app);
 
+	//create server
 	var server = http.createServer(app);
+
+	//init socket
 	require('./app/lib/socket').init(server);
 
 	// set port, listen for requests
