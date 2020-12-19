@@ -25,7 +25,9 @@ exports.validate = (method) => {
 						}else{
 							resolve(true)
 						}
-					})
+					}).catch(err => {
+						reject(new Error('Something went wrong.'))
+					});
 				})
 			}),
 			body('password', "Password required").exists().isLength({ min: 8 }),
@@ -45,17 +47,15 @@ exports.register = (req, res) => {
   	try{
 		const errors = validationResult(req);
 		if (!errors.isEmpty()) {
-			res.status(422).json({ errors: errors.array() });
-			return;
+			return res.status(422).json({ errors: errors.array() });
 		}
-
 		User.create({
 			full_name: req.body.full_name,
 			email: req.body.email,
 			password: bcrypt.hashSync(req.body.password, 8)
 		})
 		.then(user => {
-			return res.send({ message: "User was registered successfully!" });
+			return res.status(201).send({ message: "User was registered successfully!" });
 		})
 		.catch(err => {
 			return res.status(500).send({ message: err.message || ERROR_MESSAGE });
@@ -71,46 +71,32 @@ exports.login = (req, res) => {
 	try{
 		const errors = validationResult(req);
 		if (!errors.isEmpty()) {
-			res.status(422).json({ errors: errors.array() });
-			return;
+			return res.status(422).json({ errors: errors.array() });
 		}
-
-		User.findOne({
-			where: {
-			email: req.body.email
-			}
-		})
+		User.findOne({where: {email: req.body.email}})
 		.then(user => {
 				if (!user) {
 					return res.status(404).send({ message: "User Not found." });
 				}
-
-				var passwordIsValid = bcrypt.compareSync(
-					req.body.password,
-					user.password
-				);
-
+				var passwordIsValid = bcrypt.compareSync(req.body.password,user.password);
 				if (!passwordIsValid) {
-					return res.status(401).send({
-					accessToken: null,
-					message: "Invalid Password!"
-					});
+					return res.status(401).send({accessToken: null,message: "Invalid Password!"});
 				}
-
 				var token = jwt.sign({ id: user.id }, config.secret, {
 					expiresIn: config.jwatExpiresIn // 24 hours
 				});
-
-				return res.status(200).send({
-				id: user.id,
-				full_name: user.full_name,
-				email: user.email,
-				accessToken: token
-				});
-		
+				return res.status(201).send({
+					message: "User was login successfully!",
+					data:{
+						id: user.id,
+						full_name: user.full_name,
+						email: user.email,
+						accessToken: token
+					}
+				});		
 		})
 		.catch(err => {
-		res.status(500).send({ message: err.message || ERROR_MESSAGE });
+			return res.status(500).send({ message: err.message || ERROR_MESSAGE });
 		});
 	}catch(err){
 		return res.status(500).send({ message: err.message || ERROR_MESSAGE });

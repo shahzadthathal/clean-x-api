@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node forever-monitor.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "author": "M Shahzad",
   "license": "ISC",
@@ -25,5 +25,9 @@
     "sequelize-transparent-cache-ioredis": "^2.3.0",
     "socket.io": "^3.0.4",
     "winston": "^3.3.3"
+  },
+  "devDependencies": {
+    "mocha": "^8.2.1",
+    "supertest": "^6.0.1"
   }
 }

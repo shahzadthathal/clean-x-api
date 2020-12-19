@@ -66,7 +66,7 @@ exports.create = (req, res) => {
           'message':socketConfig.EVENT_TOWER_CREATED_MESSAGE
         }
         io.emitToAll(socketConfig.EVENT_TOWER_CREATED,payload)
-        return res.send(data);
+        return res.status(201).send(data);
       })
       .catch(err => {
         return res.status(500).send({message: err.message || ERROR_MESSAGE});
@@ -132,7 +132,7 @@ exports.findAll = (req, res) => {
               rows:data
             }
             const paginateData = getPagingData(dataObj, page, limit);
-            return res.send(paginateData);
+            return res.status(200).send(paginateData);
         })
         .catch(err => {
           return res.status(500).send({message: err.message || ERROR_MESSAGE});
@@ -156,7 +156,7 @@ exports.findOne = (req, res) => {
     const id = req.params.id;
     Tower.cache().findByPk(id)
     .then(data => {
-      return res.send(data);
+      return res.status(201).send(data);
     })
     .catch(err => {
       return res.status(500).send({message: err.message || ERROR_MESSAGE});
@@ -182,7 +182,7 @@ exports.update = (req, res) => {
           'message':socketConfig.EVENT_TOWER_UPDATED_MESSAGE
         }
         io.emitToAll(socketConfig.EVENT_TOWER_UPDATED,payload)
-        return res.send(tower);
+        return res.status(201).send(tower);
       }).catch(err => {
         return res.status(500).send({message: err.message || ERROR_MESSAGE});
       });
@@ -210,7 +210,7 @@ exports.delete = (req, res) => {
           'message':socketConfig.EVENT_TOWER_UPDATED_MESSAGE
         }
         io.emitToAll(socketConfig.EVENT_TOWER_DELETED,{message:'Tower deleted', 'id':id})
-        return res.send({message: "Tower was deleted successfully!"});
+        return res.status(201).send({message: "Tower was deleted successfully!"});
       }).catch(err => {
         return res.status(500).send({message: err.message || ERROR_MESSAGE});
       });

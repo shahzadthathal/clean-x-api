@@ -1,39 +1,15 @@
 const express = require("express");
 const http = require('http');
 const bodyParser = require("body-parser");
-const cors = require("cors");
 const numCPUs = require('os').cpus().length;
 const cluster       = require('cluster');
 const winston       = require('winston');
 const expressValidator = require('express-validator')
+const app = express();
+let server = null;
+process.env.NODE_ENV = "development"
 
-//cluster module for highly scalable app
-if (cluster.isMaster) { 
-	// Parent, only creates clusters
-    global.processId = 'Master';
-
-    winston.info(`Launching 1 worker(s)`);
-    //production use `i < numCPUs` instead of `i < 1`
-    for (let i = 0; i < 1; ++i) {
-        cluster.fork();
-    }
-    cluster.on('fork', worker => winston.info(`Worker ${worker.id} created`));
-    cluster.on('listening', (worker, address) => {
-        winston.info(`Worker ${worker.id} (pid ${worker.process.pid}) is now connected to ${address.address}:${address.port}`);
-    });
-    cluster.on('exit', worker => {
-        winston.warn(`Worker ${worker.id} (pid ${worker.process.pid}) died, forking a new one...`);
-        cluster.fork();
-    });
-} else {
-
-	const app = express();
-
-	// var corsOptions = {
-	//   origin: "http://localhost:8081"
-	// };
-
-	//app.use(cors(corsOptions));
+const startApp = async () => {
 
 	// parse requests of content-type - application/json
 	app.use(bodyParser.json());
@@ -58,7 +34,7 @@ if (cluster.isMaster) {
 	require("./app/routes/office.routes")(app);
 
 	//create server
-	var server = http.createServer(app);
+	server = http.createServer(app);
 
 	//init socket
 	require('./app/lib/socket').init(server);
@@ -68,5 +44,28 @@ if (cluster.isMaster) {
 	server.listen(PORT, () => {
 	  console.log(`Server is running on port ${PORT}.`);
 	});
-
 }
+
+//cluster module for highly scalable app
+if (cluster.isMaster && process.env.NODE_ENV !='test') { 
+	// Parent, only creates clusters
+    global.processId = 'Master';
+
+    winston.info(`Launching 1 worker(s)`);
+    //production use `i < numCPUs` instead of `i < 1`
+    for (let i = 0; i < 1; ++i) {
+        cluster.fork();
+    }
+    cluster.on('fork', worker => winston.info(`Worker ${worker.id} created`));
+    cluster.on('listening', (worker, address) => {
+        winston.info(`Worker ${worker.id} (pid ${worker.process.pid}) is now connected to ${address.address}:${address.port}`);
+    });
+    cluster.on('exit', worker => {
+        winston.warn(`Worker ${worker.id} (pid ${worker.process.pid}) died, forking a new one...`);
+        cluster.fork();
+    });
+} else {
+	startApp();
+}
+
+module.exports = server;
