@@ -5,6 +5,7 @@ const numCPUs = require('os').cpus().length;
 const cluster       = require('cluster');
 const winston       = require('winston');
 const expressValidator = require('express-validator')
+const fs = require('fs')
 const app = express();
 let server = null;
 process.env.NODE_ENV = "development"
@@ -29,9 +30,13 @@ const startApp = async () => {
 	    res.sendFile(__dirname + '/index.html');
 	});
 
-	require("./app/routes/user.routes")(app);
-	require("./app/routes/tower.routes")(app);
-	require("./app/routes/office.routes")(app);
+	//Dynamic routes
+	routesPath = './app/routes';
+	fs.readdirSync(routesPath).forEach(function(file) {
+		console.log(file)
+		require(routesPath + '/' + file)(app);
+	});
+
 
 	//create server
 	server = http.createServer(app);
