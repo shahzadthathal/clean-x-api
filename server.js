@@ -33,7 +33,6 @@ const startApp = async () => {
 	//Dynamic routes
 	let routesPath = './app/routes';
 	fs.readdirSync(routesPath).forEach(function(file) {
-		console.log(file)
 		require(routesPath + '/' + file)(app);
 	});
 
